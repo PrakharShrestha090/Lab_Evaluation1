@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Portal - Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gradient-to-br from-green-100 to-blue-300 min-h-screen">
+  <nav class="bg-white shadow flex justify-between items-center px-10 py-4">
+    <span class="font-extrabold text-xl text-green-700">Student Portal</span>
+    <ul class="flex gap-7">
+      <li><a href="home.html" class="nav-link">Home</a></li>
+      <li><a href="students.html" class="nav-link">Students</a></li>
+      <li><a href="profile.html" class="nav-link">Profile</a></li>
+      <li><a href="#" id="logoutBtn" class="nav-link text-red-500">Logout</a></li>
+    </ul>
+  </nav>
+  <main class="p-8 max-w-md mx-auto">
+    <h1 class="text-xl font-bold mb-4 text-green-800">My Profile</h1>
+    <div id="profileContent" class="bg-white p-6 shadow rounded-md"></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Portal - Login/Register</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gradient-to-br from-blue-400 to-sky-200 min-h-screen flex items-center justify-center">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-8">
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-800">Student Portal Login</h1>
+    <form id="loginForm" class="flex flex-col gap-4">
+      <input type="email" id="loginEmail" placeholder="Email" required class="inputbox">
+      <input type="password" id="loginPassword" placeholder="Password" required class="inputbox">
+      <button type="submit" class="bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">Login</button>
+      <div class="text-sm text-gray-700 mt-3 text-center">
+        Not registered? <a href="register.html" class="text-blue-600 underline">Register here</a>
+      </div>
+      <div id="loginError" class="text-red-500 text-center hidden">Invalid credentials.</div>
+    </form>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
