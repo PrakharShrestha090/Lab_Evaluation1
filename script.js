@@ -1,60 +1,75 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // LOGIN LOGIC
+  // LOGIN LOGIC - Call Backend API
   const loginForm = document.getElementById("loginForm");
   if (loginForm) {
-    loginForm.onsubmit = function (e) {
+    loginForm.onsubmit = async function (e) {
       e.preventDefault();
       const email = loginForm.loginEmail.value.trim();
       const password = loginForm.loginPassword.value.trim();
-      let users = JSON.parse(localStorage.getItem("users") || "[]");
-      let found = users.find((u) => u.email === email);
       const errorDiv = document.getElementById("loginError");
-      if (!found) {
-        errorDiv.innerText = "No account was found for this email.";
+
+      try {
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Store user info in localStorage
+          localStorage.setItem("currentUser", JSON.stringify(data.user));
+          errorDiv.classList.add("hidden");
+          window.location.href = "home.html";
+        } else {
+          errorDiv.innerText = data.error;
+          errorDiv.classList.remove("hidden");
+        }
+      } catch (error) {
+        errorDiv.innerText = "Connection error. Please try again.";
         errorDiv.classList.remove("hidden");
-      } else if (found.password !== password) {
-        errorDiv.innerText = "Incorrect password!";
-        errorDiv.classList.remove("hidden");
-      } else {
-        errorDiv.classList.add("hidden");
-        localStorage.setItem("currentUser", email);
-        window.location.href = "home.html";
       }
     };
   }
 
-  // REGISTER LOGIC
+  // REGISTER LOGIC - Call Backend API
   const registerForm = document.getElementById("registerForm");
   if (registerForm) {
-    registerForm.onsubmit = function (e) {
+    registerForm.onsubmit = async function (e) {
       e.preventDefault();
-      const email = registerForm.regEmail.value.trim();
-      let users = JSON.parse(localStorage.getItem("users") || "[]");
+      const registerMsg = document.getElementById("registerMsg");
 
-      // Check if email already exists
-      let existing = users.find((u) => u.email === email);
-      if (existing) {
-        alert("This email is already registered. Please login.");
-        return;
-      }
-
-      const newUser = {
+      const userData = {
         name: registerForm.regName.value.trim(),
-        email: email,
+        email: registerForm.regEmail.value.trim(),
         password: registerForm.regPassword.value.trim(),
         course: registerForm.regCourse.value.trim(),
         contact: registerForm.regContact.value.trim(),
       };
 
-      users.push(newUser);
-      localStorage.setItem("users", JSON.stringify(users));
-      localStorage.setItem("currentUser", newUser.email);
-      document.getElementById("registerMsg").innerText =
-        "Registration successful! Redirecting...";
-      document.getElementById("registerMsg").classList.remove("hidden");
-      setTimeout(() => {
-        window.location.href = "home.html";
-      }, 1500);
+      try {
+        const response = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userData),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem("currentUser", JSON.stringify(data.user));
+          registerMsg.innerText = "Registration successful! Redirecting...";
+          registerMsg.classList.remove("hidden");
+          setTimeout(() => {
+            window.location.href = "home.html";
+          }, 1500);
+        } else {
+          alert(data.error || "Registration failed");
+        }
+      } catch (error) {
+        alert("Connection error. Please try again.");
+      }
     };
   }
 
@@ -71,28 +86,35 @@ document.addEventListener("DOMContentLoaded", function () {
   // HOMEPAGE Welcome - Display logged in user's name
   const userName = document.getElementById("userName");
   if (userName) {
-    const email = localStorage.getItem("currentUser");
-    if (!email) {
-      // If not logged in, redirect to login
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (!user) {
       window.location.replace("index.html");
       return;
     }
-    let users = JSON.parse(localStorage.getItem("users") || "[]");
-    let found = users.find((u) => u.email === email);
-    userName.innerText = found?.name || "Student";
+    userName.innerText = user.name || "Student";
   }
 
-  // STUDENTS LIST PAGE
+  // STUDENTS LIST PAGE - Fetch from Backend
   const studentsList = document.getElementById("studentsList");
   if (studentsList) {
-    // Check if logged in
     const currentUser = localStorage.getItem("currentUser");
     if (!currentUser) {
       window.location.replace("index.html");
       return;
     }
 
-    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    async function loadStudents() {
+      try {
+        const response = await fetch("/api/students");
+        const students = await response.json();
+        renderStudents(students);
+
+        // Store for search
+        window.allStudents = students;
+      } catch (error) {
+        studentsList.innerHTML = `<div class="text-red-500">Error loading students</div>`;
+      }
+    }
 
     function renderStudents(list) {
       if (list.length === 0) {
@@ -114,60 +136,55 @@ document.addEventListener("DOMContentLoaded", function () {
         .join("");
     }
 
-    renderStudents(users);
+    loadStudents();
 
     // Search functionality
     const searchInput = document.getElementById("searchInput");
     if (searchInput) {
       searchInput.addEventListener("input", function () {
         let val = searchInput.value.toLowerCase();
-        renderStudents(
-          users.filter(
-            (u) =>
-              u.name.toLowerCase().includes(val) ||
-              u.email.toLowerCase().includes(val) ||
-              u.course.toLowerCase().includes(val)
-          )
-        );
+        if (window.allStudents) {
+          renderStudents(
+            window.allStudents.filter(
+              (u) =>
+                u.name.toLowerCase().includes(val) ||
+                u.email.toLowerCase().includes(val) ||
+                u.course.toLowerCase().includes(val)
+            )
+          );
+        }
       });
     }
   }
 
-  // PROFILE PAGE
+  // PROFILE PAGE - Get from localStorage (user info stored after login)
   const profileContent = document.getElementById("profileContent");
   if (profileContent) {
-    const email = localStorage.getItem("currentUser");
-    if (!email) {
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (!user) {
       window.location.replace("index.html");
       return;
     }
 
-    let users = JSON.parse(localStorage.getItem("users") || "[]");
-    let user = users.find((u) => u.email === email);
-
-    if (user) {
-      profileContent.innerHTML = `
-        <div class="space-y-3">
-          <div class="flex justify-between border-b pb-2">
-            <strong class="text-gray-700">Name:</strong>
-            <span class="text-gray-900">${user.name}</span>
-          </div>
-          <div class="flex justify-between border-b pb-2">
-            <strong class="text-gray-700">Email:</strong>
-            <span class="text-gray-900">${user.email}</span>
-          </div>
-          <div class="flex justify-between border-b pb-2">
-            <strong class="text-gray-700">Course:</strong>
-            <span class="text-gray-900">${user.course}</span>
-          </div>
-          <div class="flex justify-between border-b pb-2">
-            <strong class="text-gray-700">Contact:</strong>
-            <span class="text-gray-900">${user.contact}</span>
-          </div>
+    profileContent.innerHTML = `
+      <div class="space-y-3">
+        <div class="flex justify-between border-b pb-2">
+          <strong class="text-gray-700">Name:</strong>
+          <span class="text-gray-900">${user.name}</span>
         </div>
-      `;
-    } else {
-      profileContent.innerHTML = `<div class="text-red-500">User information not found.</div>`;
-    }
+        <div class="flex justify-between border-b pb-2">
+          <strong class="text-gray-700">Email:</strong>
+          <span class="text-gray-900">${user.email}</span>
+        </div>
+        <div class="flex justify-between border-b pb-2">
+          <strong class="text-gray-700">Course:</strong>
+          <span class="text-gray-900">${user.course}</span>
+        </div>
+        <div class="flex justify-between border-b pb-2">
+          <strong class="text-gray-700">Contact:</strong>
+          <span class="text-gray-900">${user.contact}</span>
+        </div>
+      </div>
+    `;
   }
 });
